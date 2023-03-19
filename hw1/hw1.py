@@ -138,9 +138,6 @@ def main(args : argparse.Namespace):
         result = medianCut(np.array(flatArray), args.colReduce-1)
         verifyClusters(np.array(flatArray), np.array(result))
         return result
-
-    # Task 3 is taken care of in the verifyClusters function
-
     pass
 
 

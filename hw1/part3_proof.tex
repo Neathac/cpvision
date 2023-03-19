@@ -1,0 +1,55 @@
+\documentclass[a4paper]{article}
+ 
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amsthm,amssymb,bbm,wasysym}
+\usepackage[czech]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{tabto}
+\usepackage{amsmath}
+
+\DeclareMathOperator{\Ex}{\mathbb{E}} % střední hodnota X pomocí $\Ex X$
+
+\newcommand{\N}{\mathbb{N}} % přirozená čísla
+\newcommand{\Z}{\mathbb{Z}} % celá čísla
+\newcommand{\R}{\mathbb{R}} % reálná čísla
+
+\renewcommand{\qed}{\hfill\blacksquare} % Quod Est Demonstratum (QED) 
+
+% tohle je pro prostředí úkolů
+\newenvironment{ukol}[2][Příklad]{\begin{trivlist} 
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2}]}{\end{trivlist}}
+\newenvironment{calculation}[2][Výpočet]{\begin{trivlist} 
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2}]}{\end{trivlist}}
+
+\linespread{1.15}
+ 
+\begin{document}
+ 
+% --------------------------------------------------------------
+%                         Začni ZDE
+% --------------------------------------------------------------
+ 
+\title{ Computer vision \\ 1. Homework} 
+\author{Martin Gráf}
+\date{11.3.2023}
+
+\maketitle
+
+\begin{calculation}{Task 3}
+	
+	\begin{enumerate}
+		\item We are minimizing the expression $\frac{1}{n} \sum_{i} d^2(x_i, Q(x_i)) $, where d is simply the distance inbetween two pixels color-wise. This can be expressed as an equivallent: $\frac{1}{n} (\sum_{i} x^2 - 2Q(x_i)\sum_{i}x_i+nQ(x_i)^2) $ by simply expanding the expression
+		\item Taking the derivative of this function leaves us with $\frac{1}{n} (2nQ(x) - 2\sum_{i} x_i)$ Which when set to zero: $Q(x)=\frac{\sum_{i}x_i}{n}$, of which we can take a second derivative with respect to $Q(x)$ resulting in 2, which is greater than 0 and is thus a minimum.
+		\item There are alternative ways of reaching this conclusion, most of which involve either integrals, or expected values, seeing as MSE and the expected value of the expression within the mean squared error are equivallent, but all of them lead to the same conclusion, that being that $x_i = Q(x_i)$ are the values minimizing our MSE.
+		\item This is exactly how the quantization function is chosen, only for the areas of the new palette: $Q(x) = c_i$, where $c_i$ stands for the found palette area. The nearest neighbor condition of $d(x, c_i) <= d(x, c_j)$ for all $j$ is then a direct consequence of the derivatives we took above, seening as $Q(x) = c_i$ is the only stationary point of $E[(x - c_i)^2]$ derivative, which as proven above, is also the minimum
+		\item We can after make a very similar argument for the centroid, seeing as we simply change the way we express one of the elements in the equation, which doesn't change their equality minimizing the expression of MSE.
+    	\end{enumerate}
+
+\end{calculation}
+\end{document}
+
+
