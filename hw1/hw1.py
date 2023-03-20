@@ -11,7 +11,7 @@ parser.add_argument("--colReduce", default=4, type=int, help="Square root of the
 
 
 
-def getAvg(bggr, position, directions):
+def getBggrAvg(bggr, position, directions):
     avg = 0
     for i in directions:
         avg += bggr[position[0]+i[0]][position[1]+i[1]][0]
@@ -35,9 +35,9 @@ def task01Perform(toOpen : str):
         # iterate over inner columns
         for j in range(1,len(bggrImage[i])-1):
             columnParity = rowParity[j%2]
-            newImage[i][j][0] = getAvg(bggrImage, [i,j], columnParity[0])
-            newImage[i][j][1] = getAvg(bggrImage, [i,j], columnParity[1])
-            newImage[i][j][2] = getAvg(bggrImage, [i,j], columnParity[2])
+            newImage[i][j][0] = getBggrAvg(bggrImage, [i,j], columnParity[0])
+            newImage[i][j][1] = getBggrAvg(bggrImage, [i,j], columnParity[1])
+            newImage[i][j][2] = getBggrAvg(bggrImage, [i,j], columnParity[2])
 
     # Fill in the edges
     for i in range(1,len(newImage[0])-1):
