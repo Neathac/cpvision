@@ -66,7 +66,8 @@ def bayerDemosaic(bayerImage : np.ndarray) -> Dict[str, np.ndarray]:
     # Possible pixel-pattern configurations
     diagonalAvg = [[-1, -1], [1,1],[-1,1],[1,-1]]
     straightAvg = [[0, -1], [0,1],[-1,0],[1,0]]
-    centeredDiagonalAvg = [[-1, -1], [1,1],[-1,1],[1,-1],[0,0]]
+    # centeredDiagonalAvg = [[-1, -1], [1,1],[-1,1],[1,-1],[0,0]]
+    centeredDiagonalAvg = [[0,0]]
     singleAvg = [[0, 0]]
     horizontalAvg = [[0, -1],[0,1]]
     verticalAvg = [[-1,0],[1,0]]
@@ -78,11 +79,11 @@ def bayerDemosaic(bayerImage : np.ndarray) -> Dict[str, np.ndarray]:
     bggrOddAvg = [[horizontalAvg, centeredDiagonalAvg, verticalAvg],[singleAvg, straightAvg, diagonalAvg]]
     bggrEvenAvg = [[diagonalAvg, straightAvg, singleAvg],[verticalAvg, centeredDiagonalAvg, horizontalAvg]]
 
-    grbgEvenAvg = [[horizontalAvg, straightAvg, verticalAvg],[singleAvg, centeredDiagonalAvg, diagonalAvg]]
-    grbgOddAvg = [[diagonalAvg, centeredDiagonalAvg, singleAvg],[verticalAvg, straightAvg, horizontalAvg]]
+    grbgEvenAvg = [[horizontalAvg,centeredDiagonalAvg , verticalAvg],[singleAvg, straightAvg, diagonalAvg]]
+    grbgOddAvg = [[diagonalAvg,straightAvg , singleAvg],[verticalAvg, centeredDiagonalAvg, horizontalAvg]]
 
-    gbrgEvenAvg = [[verticalAvg, straightAvg, horizontalAvg],[diagonalAvg, centeredDiagonalAvg, singleAvg]]
-    gbrgOddAvg = [[singleAvg, centeredDiagonalAvg, diagonalAvg],[horizontalAvg, straightAvg,verticalAvg ]]
+    gbrgEvenAvg = [[verticalAvg, centeredDiagonalAvg, horizontalAvg],[diagonalAvg,straightAvg , singleAvg]]
+    gbrgOddAvg = [[singleAvg, straightAvg, diagonalAvg],[horizontalAvg,centeredDiagonalAvg ,verticalAvg ]]
 
     bggr, rggb, gbrg, grbg = averagePattern(bayerImage, bggrEvenAvg, bggrOddAvg), averagePattern(bayerImage, rggbEvenAvg, rggbOddAvg), averagePattern(bayerImage, gbrgEvenAvg, gbrgOddAvg), averagePattern(bayerImage, grbgEvenAvg, grbgOddAvg)
 
