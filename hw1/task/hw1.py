@@ -5,6 +5,7 @@ import numpy as np
 import cv2 # OpenCV
 import scipy.signal
 import matplotlib.pyplot as plt
+import queue
 
 parser = argparse.ArgumentParser()
 # These arguments will not be used during evaluation but you can use them for experimentation
@@ -95,20 +96,57 @@ def bayerDemosaic(bayerImage : np.ndarray) -> Dict[str, np.ndarray]:
     return result
 
 def medianCut(image : np.ndarray, numColors : int) -> Tuple[np.ndarray, np.ndarray]:
-    flatArray = []
-        # For easier array manipulation
-        # Row
-    for i in range(len(image)):
-        # Columns
-        for j in image[i]:
-            flatArray.append(j)
-    result = medianCut(np.array(flatArray), args.colReduce-1)
-    mapped = verifyClusters(np.array(flatArray), np.array(result))
+    
+    flattenedImage = np.reshape(image, (-1, 3))
 
+    q = queue.Queue()
+    q.put(flattenedImage)
+    palette = []
+    for i in range(numColors):
+        if q.empty():
+            break
+        currentImage = q.get()
+
+        if len(currentImage) < 2:
+            q.put(currentImage)
+            break
+
+        r_range = np.ptp(currentImage[:,0])
+        g_range = np.ptp(currentImage[:,1])
+        b_range = np.ptp(currentImage[:,2])
+
+        if g_range >= r_range and g_range >= b_range:
+            sortedImage = currentImage[currentImage[:, 1].argsort()]
+        elif b_range >= r_range and b_range >= g_range:
+            sortedImage = currentImage[currentImage[:, 2].argsort()]
+        elif r_range >= b_range and r_range >= g_range:
+            sortedImage = currentImage[currentImage[:, 0].argsort()]
+
+        median_index = int((len(currentImage) + 1) / 2)
+        
+        q.put(sortedImage[0:median_index])
+        q.put(sortedImage[median_index:])
     
+    while not q.empty():
+        current = q.get()
+        r_average = np.mean(current[:, 0])
+        g_average = np.mean(current[:, 1])
+        b_average = np.mean(current[:, 2])
+        palette.append([r_average, g_average, b_average])
     
-    palette = None
-    idxImage = None
+    idxImage = np.zeros((image.shape[0], image.shape[1]), dtype=int)
+    for i in range(len(image)):
+        for j in range(len(image[i])):
+            currDistance = np.finfo(float).max
+            for z in range(len(palette)-1):
+                newDist = np.linalg.norm(image[i][j] - palette[z])
+                if newDist < currDistance:
+                    currDistance = newDist
+                    idxImage[i][j] = int(z)
+    # sort the image pixels by color space with highest range
+    # and find the median and divide the array.
+    print(idxImage)
+    
     return palette, idxImage
 
 def preMedianCut(image : np.ndarray, numColors : int) -> list:
@@ -134,77 +172,8 @@ def preMedianCut(image : np.ndarray, numColors : int) -> list:
     # - You can sort with 'np.sort' and you can compute sorted indices into an array with 'np.argsort'.
     # - You can find unique values/rows in a 2D matrix with 'np.unique'.
     # - To get the index of the largest/smallest value in an array, use 'np.argsort'/'np.argmin'
-
-    if len(image) == 0:
-        return 
-        
-    if numColors == 0:
-        rAverage = np.mean(image[:,0])
-        gAverage = np.mean(image[:,1])
-        bAverage = np.mean(image[:,2])
-        return [[int(rAverage), int(gAverage), int(bAverage)]]
-    # Get the greatest difference in color values along individual channels
-    rRange = np.max(image[:,0]) - np.min(image[:,0])
-    gRange = np.max(image[:,1]) - np.min(image[:,1])
-    bRange = np.max(image[:,2]) - np.min(image[:,2])
-    # Array indexing purposes
-    greatestRangeIndex = 0
-    if max(rRange, gRange, bRange) is rRange:
-        greatestRangeIndex = 0
-    elif max(rRange, gRange, bRange) is gRange:
-        greatestRangeIndex = 1
-    else:
-        greatestRangeIndex = 2
-
-    # Sort by appropriate channel and get median
-    image = image[image[:, greatestRangeIndex].argsort()]
-    medianIndex = int(np.ceil(len(image)/2))
+    pass
     
-    firstSplit = preMedianCut(image[0:medianIndex], numColors-1)
-    secondSplit = image[medianIndex:]
-    rAverage = np.mean(secondSplit[:,0])
-    gAverage = np.mean(secondSplit[:,1])
-    bAverage = np.mean(secondSplit[:,2])
-    toReturn = []
-    toReturn.append([int(rAverage), int(gAverage), int(bAverage)])
-    # Unpack the lists for better output format
-    
-    for list in firstSplit:
-        toReturn.append(list)
-    
-    return toReturn
-
-def verifyClusters(image : np.array, newPallete : np.array):
-    # Getting Mean Squared Error
-    mappedImage = []
-    distanceSum = 0
-    for i in image:
-        closestCentroid = 0
-        minDistance = np.linalg.norm(i-newPallete[0])
-        for j in range(1,len(newPallete)):
-            distance = np.linalg.norm(i-newPallete[j])
-            if distance < minDistance:
-                closestCentroid = j
-                minDistance = distance
-        mappedImage.append([i[0],i[1],i[2],closestCentroid])
-        distanceSum += minDistance
-    mse = distanceSum/len(image)
-
-    # Get average centroid distance
-    distances = 0
-    for i in newPallete:
-        distance = 0
-        for j in newPallete:
-            if i is not j:
-                distance += np.linalg.norm(i-j)
-        distances +=(distance/(len(newPallete)-1))
-
-    if mse < distances/((len(newPallete)/2)):
-        print("The mean squared error is " + str(mse) + ", which is less then half of the average distance between individual centroids")
-        print("The pallete fullfills optimal criteria")
-    else:
-        print("Something went wrong, the mean square error is greater then average quantile size")
-    return mappedImage
 
 def main(args : argparse.Namespace):
     if args.task == "bayer":
