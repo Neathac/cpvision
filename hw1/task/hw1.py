@@ -136,17 +136,10 @@ def medianCut(image : np.ndarray, numColors : int) -> Tuple[np.ndarray, np.ndarr
         palette.append([r_average, g_average, b_average])
     
     idxImage = np.zeros((image.shape[0], image.shape[1]), dtype=int)
+    palette.pop()
     for i in range(len(image)):
         for j in range(len(image[i])):
-            currDistance = np.finfo(float).max
-            for z in range(len(palette)-1):
-                newDist = np.linalg.norm(image[i][j] - palette[z])
-                if newDist < currDistance:
-                    currDistance = newDist
-                    idxImage[i][j] = int(z)
-    # sort the image pixels by color space with highest range
-    # and find the median and divide the array.
-    print(idxImage)
+            idxImage[i][j] = np.abs(image[i][j] - palette).sum(axis=1).argmin()
     
     return palette, idxImage
 
