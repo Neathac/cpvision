@@ -123,7 +123,10 @@ def harrisCorners(image : np.ndarray, sigma : float, alpha : float) -> Dict[str,
             TriggR = min(eigenValues[0], eigenValues[1]) - RESPONSE_CONSTANT*max(eigenValues[0], eigenValues[1])
             responseTriggs[y, x] = TriggR
             # Brown, Szeliski, and Winder response
-            BSWinderR = (determinant/(eigenValues[0]+eigenValues[1]))
+            if eigenValues[0]+eigenValues[1] != 0:
+                BSWinderR = ((eigenValues[0]*eigenValues[1])/(eigenValues[0]+eigenValues[1]))
+            else:
+                BSWinderR = ((eigenValues[0]*eigenValues[1])/1)
             responseBrown[y, x] = BSWinderR
 
             '''
@@ -168,13 +171,48 @@ def harrisCorners(image : np.ndarray, sigma : float, alpha : float) -> Dict[str,
 
     return responses
 
+def create_circular_mask(radius):
+    center = (int(radius/2), int(radius/2))
+    Y, X = np.ogrid[:radius, :radius]
+    dist_from_center = np.sqrt((X - center[0])**2 + (Y-center[1])**2)
+    mask = dist_from_center <= int(radius/2)
+    return mask
+
 def susanCorners(image : np.ndarray, radius : int, threshold : float, gMultiplier : float) -> Dict[str, np.ndarray]:
     # TODO (Task 2 'SUSAN corner detection'): Implement the SUSAN edge and corner detector, which was mentioned
     # in the lecture. Since it wasn't thoroughly describedo n the lecture, you can use additional sources:
     # - Rundown of the paper: https://users.fmrib.ox.ac.uk/~steve/susan/susan/node6.html
     # - SUSAN paper: https://link.springer.com/article/10.1023/A:1007963824710
     # - Other sources.
-    #
+    susanHard = np.zeros(image.shape)
+    susanSoft = np.zeros(image.shape)
+    maximum = 0
+    mask = create_circular_mask(radius=(radius*2)+1)
+    # tempMask = np.ones((radius, radius))
+    # mask = tempMask > 0
+    
+    mask[radius, radius] = False
+    maximum = int(np.sum(mask))
+    g = gMultiplier*maximum
+    
+    for x in range(radius+1, image.shape[0] - (radius+1)):
+        for y in range(radius, image.shape[1] - radius):
+            imagePiece = image[x-radius:x+radius+1, y-radius:y+radius+1]
+            croppedPixels = imagePiece[mask]
+            centerPoint = image[x, y]
+            hardBrightnessSum = 0
+            softBrightnessSum = 0
+
+            for i in croppedPixels:
+                softBrightnessSum += np.exp(-np.power((i - centerPoint)/threshold, 6))
+                hardDifference = np.abs(i - centerPoint)
+                if hardDifference <= threshold:
+                    hardBrightnessSum += 1
+            if g > hardBrightnessSum:
+                susanHard[x, y] = g - hardBrightnessSum
+            if g > softBrightnessSum:
+                susanSoft[x, y] = g - softBrightnessSum
+    
     # The requirements for your implementation are the following:
     # - Variable radius of the USAN neighbourhood given by 'radius'.
     # - Variable threshold 't' given by 'threshold'.
@@ -204,8 +242,7 @@ def susanCorners(image : np.ndarray, radius : int, threshold : float, gMultiplie
     # --threshold_rel ... relative threshold for corner non-maximal suppression.
     # --angle ... Angle of rotation.
 
-    susanHard = None
-    susanSoft = None
+    
 
     susan = {
         SusanMethods.HARD : susanHard,
