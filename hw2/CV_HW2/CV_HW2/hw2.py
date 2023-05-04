@@ -128,17 +128,6 @@ def harrisCorners(image : np.ndarray, sigma : float, alpha : float) -> Dict[str,
             else:
                 BSWinderR = ((eigenValues[0]*eigenValues[1])/1)
             responseBrown[y, x] = BSWinderR
-
-            '''
-            if HarrisR > THRESHOLD:
-                HarrisCorners.append([x,y,HarrisR])
-            if ShiR > THRESHOLD:
-                ShiCorners.append([x,y,ShiR])
-            if TriggR > THRESHOLD:
-                TriggCorners.append([x,y,TriggR])
-            if BSWinderR > THRESHOLD:
-                BSWinderCorners.append([x,y,BSWinderR])
-            '''
     # It is forbidden:
     # - to use any functions for eigenvalue decomposition - both skimage and opencv contain functions, which
     #   return eigenvalues for each pixel, similarly, numpy has methods for general eigen decomposition.
@@ -148,7 +137,16 @@ def harrisCorners(image : np.ndarray, sigma : float, alpha : float) -> Dict[str,
     # - Are there any problems/exceptions?
     # - Explain your findings.
     # - You can write the explanation here in a commented section.
-    #
+    
+    '''
+    Unsurprisingly, rotations that maintain relative spatial relations and size of the image - meaning 0, 90, 180... - degree rotations are invariant. Seeing as we
+    base our corner detection off of derivatives in x and y directions, the intensity of these derivatives remains unchanged, although it may change polarity.
+    Surprisingly - discounting corners created by padding for rotated images - Harris detection remains remarkably consistent for skewed images - angles of 45, 135... -
+    degree rotations. There are slight improvements in places even, as it handles very sligthly curved surfaces - such as sides of a triangle - marginally better. 
+    This is no doubt precisely because of the way derivatives work. Rotation may turn these "curved" surfaces into flat ones in the eyes of x and y, but may in turn create
+    other "curved" surfaces out of previously flat ones, making this a double-edged sword. It doesn't appear to be significant improvement or worsening in either case, however.
+    '''
+
     # You can evaluate Harris corner detection with:
     # >>> python evaluator.py --test=harris --image=path/to/image
     #
@@ -227,7 +225,16 @@ def susanCorners(image : np.ndarray, radius : int, threshold : float, gMultiplie
     # - Are there any problems/exceptions?
     # - Explain your findings.
     # - You can write the explanation here in a commented section.
-    #
+
+    '''
+    That isn't a straightforward question. The SUSAN algorithm appears to be invariant to rotation IF and only if the image is rotated in such a way where 
+    its relative spatial relationships are perserved and the image dimensions are as well. This means that no change in detected corners occurs for images rotated by
+    0, 90, or 180 degrees. There are, however, significantly more detected corners in images - not all of which are correct - if the image is rotated by 
+    45, 135, or other such angles. This probably has most to do with what pixels fall within the mask, seeing as composing a circular mask out of square pixels may
+    cause extra pixels to fall within the mask, or otherwise not, thus changing the proportion of bright and non-bright pixels that get considered for each mask, even
+    if the geometric area for a perfect circle remains unchanged.
+    '''
+    
     # You can evaluate SUSAN corner detection with:
     # >>> python evaluator.py --test=susan --image=path/to/image
     #
